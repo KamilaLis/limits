@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<package>
+  <name>limits</name>
+  <version>0.0.0</version>
+  <description>The elektron_ids component</description>
+
+  <maintainer email="kamila.lis@outlook.com">kl</maintainer>
+
+  <license>TODO</license>
+
+  <!-- Use build_depend for packages you need at compile time: -->
+  <build_depend>roscpp</build_depend>
+  <build_depend>tf</build_depend>
+
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+
+  <!-- Use run_depend for packages you need at runtime: -->
+  <run_depend>roscpp</run_depend>
+  <run_depend>tf</run_depend>
+
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+
+  <!-- Use buildtool_depend for build tool packages: -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>

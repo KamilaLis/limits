@@ -1,0 +1,27 @@
+<launch>
+
+  <arg name="machine_name" default="robot" />
+  <arg name="machine_address" default="192.168.1.241" />
+  <!--arg name="machine_user"   default="ubuntu" />
+  <arg name="machine_env" default="/home/catkin_ws/env.sh" /-->
+
+  <!-- Remote configuration -->
+  <machine name="$(arg machine_name)" 
+           address="$(arg machine_address)" 
+           default="true"  />
+<!--       user="$(arg machine_user)" 
+           env-loader="$(arg machine_env)" -->
+
+
+  <!-- Limits -->
+  <node name="limits" pkg="limits" type="limits_node" output="screen" >
+
+    <param name="min_range" type="double" value="1.2" />
+    <param name="max_value_lin" type="double" value="1.0" />
+    <param name="min_value_lin" type="double" value="-0.5" />
+    <param name="max_value_ang" type="double" value="1.7" />
+    <param name="max_delta" type="double" value="0.5" />
+
+  </node>
+
+</launch>
