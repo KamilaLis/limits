@@ -41,6 +41,7 @@ public:
   void stop()
   {
     ROS_INFO("Stopping robot...");
+    sendDiagnosticMsg("Stopping robot...", 1);
     //ej, jestes oddzielnym komputerem... czemu nie mógłbyś przestać odbierać pakietów??
     //coś jak ochrona przed zalaniem, blokuję przyjmowanie
   }
