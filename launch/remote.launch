@@ -3,7 +3,7 @@
   <arg name="machine_name" default="robot" />
   <arg name="machine_address" default="192.168.1.122" />
   <arg name="machine_user"   default="stero" />
-  <arg name="machine_env" default="/home/ws_ids/src/limits/env.sh" />
+  <arg name="machine_env" default="/home/stero/ws_ids/src/limits/env.sh" />
 
   <!-- Remote configuration -->
   <machine name="$(arg machine_name)" 
