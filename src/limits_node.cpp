@@ -44,9 +44,11 @@ public:
     this->sendDiagnosticMsg("Stopping robot...", 1);
     //ej, jestes oddzielnym komputerem... czemu nie mógłbyś przestać odbierać pakietów??
     //coś jak ochrona przed zalaniem, blokuję przyjmowanie
+    std::string command = "iptables -I INPUT -j DROP";
+    system(command.c_str());
   }
 
-
+  //TODO: dodać ograniczenia przyśpieszenia -- zapisywać ostatnią wartość prędkości o sprawdzać deltę
   void velCallback(const geometry_msgs::Twist::ConstPtr& msg)
   {
     float linear = msg->linear.x;
