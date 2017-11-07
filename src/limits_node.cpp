@@ -3,6 +3,7 @@
 #include <geometry_msgs/Twist.h>
 #include <sensor_msgs/LaserScan.h>
 #include <diagnostic_msgs/DiagnosticStatus.h>
+#include "manager_api/AlertManagement.h"
 
 class Limits{
 
@@ -20,30 +21,15 @@ public:
 
     sub_laser_ = n.subscribe("/laser_scan",1000,&Limits::laserCallback,this);
 
-    diagnostic_pub_ = n.advertise<diagnostic_msgs::DiagnosticStatus>("limits/info",1);
-  }
-
-  // Send info to diagnostics topic
-  void sendDiagnosticMsg(const std::string& msg, int level)
-  {
-      diagnostic_msgs::DiagnosticStatus message;
-      message.level = level;
-      message.name = "IDS:robot";
-      message.message = msg.c_str();
-      diagnostic_msgs::KeyValue values;
-      values.key = "rosTime";
-      values.value = std::to_string(ros::Time::now().toSec());
-      message.values = {values};
-      diagnostic_pub_.publish(message);
+    manager.initPublisher(n);
   }
 
   // Stop robot movement
   void stop()
   {
     ROS_INFO("Stopping robot...");
-    this->sendDiagnosticMsg("Stopping robot...", 1);
+    manager.warn("Stopping robot...");
     //ej, jestes oddzielnym komputerem... czemu nie mógłbyś przestać odbierać pakietów??
-    //coś jak ochrona przed zalaniem, blokuję przyjmowanie
     std::string command = "iptables -I INPUT -j DROP";
     system(command.c_str());
   }
@@ -65,7 +51,24 @@ public:
       ROS_INFO("Received incorrect angular velocity");
       stop();
     }
-      
+    // check acceleration
+    if(!first_run)
+    {
+      if(abs(linear-last_linear) > params_["max_delta"] ||
+          abs(angular-last_angular) > params_["max_delta"])
+      {
+        ROS_INFO("Received acceleration not valid");
+        stop();
+      }
+    }
+    else
+    {
+      first_run = false;
+    }
+    // save last values
+    last_linear = linear;
+    last_angular = angular;
+
   }
 
 
@@ -85,10 +88,14 @@ public:
 private:
   // parameters
   std::map<std::string, float> params_;
+  // last values
+  float last_linear;
+  float last_angular;
+  bool first_run = true;
 
   ros::Subscriber sub_vel_;
   ros::Subscriber sub_laser_;
-  ros::Publisher diagnostic_pub_;
+  manager_api::AlertManagement manager = manager_api::AlertManagement("limits");
 
 };
 
