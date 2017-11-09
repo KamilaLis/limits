@@ -105,7 +105,7 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "limits");
 
-  ros::NodeHandle n;
+  ros::NodeHandle n("~");
   Limits limits(n);
   ROS_INFO("Limits started!");
 
