@@ -18,12 +18,12 @@ public:
     n.param<float> ("max_value_ang", params_["max_value_ang"], 1.7);
     n.param<float> ("max_delta", params_["max_delta"], 0.5);
 
-    n.param<std::string> ("velocity_topic", topics_["velocity_topic"]);
-    n.param<std::string> ("laser_topic", topics_["laser_topic"]);
+    n.getParam("velocity_topic", velocity_topic);
+    n.getParam("laser_topic", laser_topic);
 
-    sub_vel_ = n.subscribe(topics_["velocity_topic"],1000,&Limits::velCallback,this);
+    sub_vel_ = n.subscribe(velocity_topic,1000,&Limits::velCallback,this);
 
-    sub_laser_ = n.subscribe(topics_["laser_topic"],1000,&Limits::laserCallback,this);
+    sub_laser_ = n.subscribe(laser_topic,1000,&Limits::laserCallback,this);
 
     manager.initPublisher(n);
   }
@@ -35,7 +35,7 @@ public:
     { // ask elektron_ids to kill subscriber of velocity_topic
       ROS_INFO("Stopping robot...");
       manager_api::Message key = manager_api::Message::killSubsriber;
-      manager.error(msg, key, topics_["velocity_topic"]);
+      manager.error(msg, key, velocity_topic);
       stop_sended = true;
     }
     else // we already sended 'stop' request
@@ -106,7 +106,7 @@ public:
 private:
   // parameters
   std::map<std::string, float> params_;
-  std::map<std::string, std::string> topics_;
+  std::string velocity_topic, laser_topic;
   // last values
   float last_linear;
   float last_angular;
