@@ -11,30 +11,42 @@ public:
   Limits(ros::NodeHandle& n)
   {
     // Read parameters
-    n.param<float> ("min_range", params_["min_range"], 0.65);
+    n.param<float> ("min_range_forward", params_["min_range_forward"], 0.65);
+    n.param<float> ("min_range_backward", params_["min_range_backward"], 0.65);
     n.param<float> ("max_value_lin", params_["max_value_lin"], 1.0);
     n.param<float> ("min_value_lin", params_["min_value_lin"], -0.5);
     n.param<float> ("max_value_ang", params_["max_value_ang"], 1.7);
     n.param<float> ("max_delta", params_["max_delta"], 0.5);
 
-    sub_vel_ = n.subscribe("/mux_vel_raw/cmd_vel",1000,&Limits::velCallback,this);
+    n.param<std::string> ("velocity_topic", topics_["velocity_topic"]);
+    n.param<std::string> ("laser_topic", topics_["laser_topic"]);
 
-    sub_laser_ = n.subscribe("/laser_scan",1000,&Limits::laserCallback,this);
+    sub_vel_ = n.subscribe(topics_["velocity_topic"],1000,&Limits::velCallback,this);
+
+    sub_laser_ = n.subscribe(topics_["laser_topic"],1000,&Limits::laserCallback,this);
 
     manager.initPublisher(n);
   }
 
   // Stop robot movement
-  void stop()
+  void stop(const std::string &msg)
   {
-    ROS_INFO("Stopping robot...");
-    manager.warn("Stopping robot...");
-    //ej, jestes oddzielnym komputerem... czemu nie mógłbyś przestać odbierać pakietów??
-    std::string command = "iptables -I INPUT -j DROP";
-    system(command.c_str());
+    if (!stop_sended)
+    { // ask elektron_ids to kill subscriber of velocity_topic
+      ROS_INFO("Stopping robot...");
+      manager_api::Message key = manager_api::Message::killSubsriber;
+      manager.error(msg, key, topics_["velocity_topic"]);
+      stop_sended = true;
+    }
+    else // we already sended 'stop' request
+    { // shutdown onboard computer
+      ROS_INFO("Shutting down");
+      std::string command = "shutdown now";
+      //system(command.c_str());
+    }
   }
 
-  //TODO: dodać ograniczenia przyśpieszenia -- zapisywać ostatnią wartość prędkości o sprawdzać deltę
+
   void velCallback(const geometry_msgs::Twist::ConstPtr& msg)
   {
     float linear = msg->linear.x;
@@ -43,13 +55,13 @@ public:
     if(linear>params_["max_value_lin"] || linear<params_["min_value_lin"])
     {
       ROS_INFO("Received incorrect linear velocity");
-      stop();
+      stop("Received incorrect linear velocity");
     } 
 
     if(angular>params_["max_value_ang"] || angular<-params_["max_value_ang"])
     {
       ROS_INFO("Received incorrect angular velocity");
-      stop();
+      stop("Received incorrect angular velocity");
     }
     // check acceleration
     if(!first_run)
@@ -58,7 +70,7 @@ public:
           abs(angular-last_angular) > params_["max_delta"])
       {
         ROS_INFO("Received acceleration not valid");
-        stop();
+        stop("Received acceleration not valid");
       }
     }
     else
@@ -75,23 +87,33 @@ public:
   void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg)
   {
     std::vector<float> ranges = msg->ranges;
-    for (auto r : ranges)
-    {
-      if(r<params_["min_range"]){
-        ROS_INFO("Laser: unsave distance");
-        stop();
-      } 
+    // have ranges changed? = is robot moving?
+    if (last_ranges_ != ranges)
+    { // check if robot is running forward or backward
+      std::string range = last_linear>0 ? "min_range_forward" : "min_range_backward";
+      for (auto r : ranges)
+      { 
+        if(r<params_[range]){
+          ROS_INFO("Laser: unsave distance");
+          stop("Laser: unsave distance");
+        } 
+      }
+      // save ranges
+      last_ranges_ = ranges;
     }
-
   }
 
 private:
   // parameters
   std::map<std::string, float> params_;
+  std::map<std::string, std::string> topics_;
   // last values
   float last_linear;
   float last_angular;
   bool first_run = true;
+  std::vector<float> last_ranges_;
+
+  bool stop_sended = false;
 
   ros::Subscriber sub_vel_;
   ros::Subscriber sub_laser_;

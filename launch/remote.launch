@@ -14,13 +14,17 @@
 
 
   <!-- Limits -->
-  <node name="limits" pkg="limits" type="limits_node" output="screen" launch-prefix="sudo">
+  <node name="limits" pkg="limits" type="limits_node" output="screen">
 
-    <param name="min_range" type="double" value="0.65" />
+    <param name="min_range_forward" type="double" value="0.65" />
+    <param name="min_range_backward" type="double" value="0.65" />
     <param name="max_value_lin" type="double" value="1.0" />
     <param name="min_value_lin" type="double" value="-0.5" />
     <param name="max_value_ang" type="double" value="1.7" />
     <param name="max_delta" type="double" value="0.5" />
+
+    <param name="velocity_topic" type="str" value="/mux_vel_raw/cmd_vel" />
+    <param name="laser_topic" type="str" value="/laser_scan" />
 
   </node>
 
