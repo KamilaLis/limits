@@ -42,6 +42,7 @@ public:
     { // calling service failed
       ROS_INFO("Shutting down");
       std::string command = "shutdown now";
+      system(command.c_str());
     }
   }
 
