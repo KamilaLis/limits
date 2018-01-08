@@ -2,8 +2,9 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
 #include <sensor_msgs/LaserScan.h>
-#include <diagnostic_msgs/DiagnosticStatus.h>
+//#include <diagnostic_msgs/DiagnosticStatus.h>
 #include "manager_api/AlertManagement.h"
+#include "manager_api/ManagerClient.h"
 
 class Limits{
 
@@ -25,24 +26,22 @@ public:
 
     sub_laser_ = n.subscribe(laser_topic,1000,&Limits::laserCallback,this);
 
-    manager.initPublisher(n);
+    manager_pub.initPublisher(n);
+    manager_client.initManagerClient(n);
   }
 
   // Stop robot movement
   void stop(const std::string &msg)
   {
-    if (!stop_sended)
-    { // ask elektron_ids to kill subscriber of velocity_topic
-      ROS_INFO("Stopping robot...");
-      manager_api::Message key = manager_api::Message::killSubsriber;
-      manager.error(msg, key, velocity_topic);
-      stop_sended = true;
-    }
-    else // we already sended 'stop' request
-    { // shutdown onboard computer
+    ROS_INFO("Stopping robot...");
+    manager_api::Message request = manager_api::Message::killSubsriber;
+    manager_pub.error(msg, request, velocity_topic);
+    // ask elektron_ids to kill subscriber of velocity_topic
+    bool result = manager_client.error(msg, request, velocity_topic);
+    if(!result)
+    { // calling service failed
       ROS_INFO("Shutting down");
       std::string command = "shutdown now";
-      //system(command.c_str());
     }
   }
 
@@ -117,8 +116,8 @@ private:
 
   ros::Subscriber sub_vel_;
   ros::Subscriber sub_laser_;
-  manager_api::AlertManagement manager = manager_api::AlertManagement("limits");
-
+  manager_api::AlertManagement manager_pub = manager_api::AlertManagement("limits");
+  manager_api::ManagerClient manager_client = manager_api::ManagerClient("limits");
 };
 
 
