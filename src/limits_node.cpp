@@ -27,21 +27,26 @@ public:
     sub_laser_ = n.subscribe(laser_topic,1000,&Limits::laserCallback,this);
 
     manager_pub.initPublisher(n);
-    manager_client.initManagerClient(n);
+    ros::NodeHandle nh;
+    manager_client.initManagerClient(nh);
   }
 
   // Stop robot movement
   void stop(const std::string &msg)
   {
-    ROS_INFO("Stopping robot...");
-    manager_api::Message request = manager_api::Message::killSubsriber;
-    manager_pub.error(msg, request, velocity_topic);
-    // ask elektron_ids to kill subscriber of velocity_topic
-    bool result = manager_client.error(msg, request, velocity_topic);
-    if(!result)
-    { // calling service failed
-      ROS_INFO("Shutting down");
-      system("shutdown -P now");
+    if(!stop_sended)
+    {
+        ROS_INFO("Stopping robot...");
+        manager_api::Message request = manager_api::Message::killSubsriber;
+        manager_pub.error(msg, request, velocity_topic);
+        // ask elektron_ids to kill subscriber of velocity_topic
+        bool result = manager_client.error(msg, request, velocity_topic);
+        if(!result)
+        { // calling service failed
+          ROS_INFO("Shutting down");
+          system("shutdown -P now");
+        }
+        else stop_sended = true;
     }
   }
 
